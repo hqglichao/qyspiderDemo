@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
+# Created on 2018-11-12 10:20:40
+# Project: spiderImg
+
+from pyspider.libs.base_handler import *
+import urllib2,HTMLParser,re
+import os
+
+tmp = 0
+globalName = ""
+class Handler(BaseHandler):
+    crawl_config = {
+        'itag': '3',
+        'headers': {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+'Accept-Encoding': 'gzip, deflate, br',
+'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+'Cache-Control': 'max-age=0',
+'Connection': 'keep-alive',
+'Cookie': 'acw_tc=3ccdc15b15417347274545188e6d55a9fcce52281e1440824c7172a1d35317; sensorsdata2015jssdkcross=%7B%22distinct_id%22%3A%22166f68d03ea429-0ed975f66100f3-3c7f0257-2359296-166f68d03ed1067%22%2C%22%24device_id%22%3A%22166f68d03ea429-0ed975f66100f3-3c7f0257-2359296-166f68d03ed1067%22%2C%22props%22%3A%7B%22%24latest_traffic_source_type%22%3A%22%E7%9B%B4%E6%8E%A5%E6%B5%81%E9%87%8F%22%2C%22%24latest_referrer%22%3A%22%22%2C%22%24latest_referrer_host%22%3A%22%22%2C%22%24latest_search_keyword%22%3A%22%E6%9C%AA%E5%8F%96%E5%88%B0%E5%80%BC_%E7%9B%B4%E6%8E%A5%E6%89%93%E5%BC%80%22%7D%7D; _ga=GA1.2.175898855.1541734729; _gid=GA1.2.435422236.1542000715; XSRF-TOKEN=eyJpdiI6IlNJcmtYYW5QUFhQU0RWXC96MGZ5Mk1BPT0iLCJ2YWx1ZSI6InVnQ3BFRDV0bndFRVREZjNZb0FCZXR1QzIyTXFJRmcrZGJlRDBZNWExcGNiM1pONVUxOXRoNmhrS1JmMitLNjJySkY5STJHaFwvYzBpUTB6dFJxbVhxUT09IiwibWFjIjoiYWJhZTZlNDViOTIwNDhhNDlhMWQ5MThiZDkyOWJmZDEyYjg3NjNiNDljZGNlZjBmNTFkNWE0NmU2YzU4NjdiYiJ9; tap_sess=eyJpdiI6IlNacUR3OE0yUWxRcDRUaHNTcU94Smc9PSIsInZhbHVlIjoiM1NNWThDUWVnQnhWeHpSaVBVOVhqZUpOY3I0RGhidklQVmZTOWJNQXNIUkhWV1FjZ3lBYVVhQTN6VXFDSWZWRjZjUWFoRER0bEN2WjdKOTZLdkpnYkE9PSIsIm1hYyI6IjYzOWQ2NzkzOTJmMjAwOTc2OWI2MWM2ZjQ4NTg5MTEyZWZlMzYyYmE4ZjA2ZGZlNTQ1ZjM4MjhhMmJmZWZhMmMifQ%3D%3D; _gat=1',
+'Host': 'www.taptap.com',
+'Upgrade-Insecure-Requests': '1',
+'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'}
+    }
+
+    @every(minutes=24 * 60)
+    def on_start(self):
+        print 222222
+        for num in range (1,100):
+            self.crawl('https://www.taptap.com/app/23452/topic?type=all&sort=commented&page=' + str(num), validate_cert = False, callback=self.index_page)
+
+    def index_page(self, response):
+        print 111111
+        for each in response.doc('.main-body-topics .item-text-images img').items():
+            name = each.parent().parent().parent().children('a h2').html().encode('utf-8')
+            self.downloadImage(each.attr.src, str(name))
+            
+    #图片下载
+    def downloadImage(self,url, name):
+        print os.getcwd()
+        global tmp
+        global globalName
+        if globalName == name:
+            tmp += 1
+        else:
+            tmp = 0
+        globalName = name
+        name = name + "(" + str(tmp) + ").jpg"
+        localSavePath = './spiderImg/'
+        req = urllib2.Request(url.encode('utf-8'))
+        cont = urllib2.urlopen(req).read();
+        filename = localSavePath+name
+        f = open(filename,'wb')
+        f.write(cont)
+        f.close()

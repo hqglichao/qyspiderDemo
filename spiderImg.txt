@@ -9,6 +9,7 @@ import os
 
 tmp = 0
 globalName = ""
+FILE_PATH = os.path.expandvars('$HOME') + "/spiderImg/"
 class Handler(BaseHandler):
     crawl_config = {
         'itag': '3',
@@ -26,7 +27,12 @@ class Handler(BaseHandler):
     @every(minutes=24 * 60)
     def on_start(self):
         print 222222
-        for num in range (1,100):
+        if os.path.isdir(FILE_PATH):  ##不用加引号，如果是多级目录，只判断最后一级目录是否存在
+            print 'dir exists'
+        else:
+            print 'dir not exists'
+            os.mkdir(FILE_PATH)  ##只能创建单级目录，用这个命令创建级联的会报OSError错误
+        for num in range (1,5):
             self.crawl('https://www.taptap.com/app/23452/topic?type=all&sort=commented&page=' + str(num), validate_cert = False, callback=self.index_page)
 
     def index_page(self, response):
@@ -37,7 +43,6 @@ class Handler(BaseHandler):
             
     #图片下载
     def downloadImage(self,url, name):
-        print os.getcwd()
         global tmp
         global globalName
         if globalName == name:
@@ -46,10 +51,13 @@ class Handler(BaseHandler):
             tmp = 0
         globalName = name
         name = name + "(" + str(tmp) + ").jpg"
-        localSavePath = './spiderImg/'
         req = urllib2.Request(url.encode('utf-8'))
-        cont = urllib2.urlopen(req).read();
-        filename = localSavePath+name
+        cont = urllib2.urlopen(req).read()
+        
+        global FILE_PATH
+        print FILE_PATH
+        filename = FILE_PATH+name
+        print filename
         f = open(filename,'wb')
         f.write(cont)
         f.close()
